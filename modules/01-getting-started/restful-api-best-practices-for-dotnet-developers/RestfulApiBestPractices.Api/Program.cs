@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using RestfulApiBestPractices.Api.DTOs;
 using RestfulApiBestPractices.Api.DTOs.Pagination;
+using RestfulApiBestPractices.Api.Extensions;
+using RestfulApiBestPractices.Api.Middlewares;
 using RestfulApiBestPractices.Api.Services;
 using Scalar.AspNetCore;
 
@@ -10,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IProductService, ProductService>();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+builder.Services.AddTransient<CorrelationIdMiddleware>();
 builder.Services.AddOutputCache(options =>
 {
     options.AddPolicy("Expires30", builder => 
@@ -23,6 +26,8 @@ app.UseExceptionHandler();
 app.MapOpenApi();
 app.MapScalarApiReference();
 app.UseOutputCache();
+app.UseCorrelationId();
+app.UseRequestLogging();
 
 // API Routes - Version 1
 var api = app.MapGroup("/api/v1");

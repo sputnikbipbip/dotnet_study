@@ -1,5 +1,4 @@
 ﻿using AwesomeAssertions;
-using Microsoft.AspNetCore.OutputCaching;
 using RestfulApiBestPractices.Api.DTOs;
 using RestfulApiBestPractices.Api.Services;
 using Xunit;
