@@ -10,6 +10,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IProductService, ProductService>();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+builder.Services.AddOutputCache(options =>
+{
+    options.AddPolicy("Expires30", builder => 
+        builder.Expire(TimeSpan.FromSeconds(30)));
+});
 
 var app = builder.Build();
 
@@ -17,6 +22,7 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.MapOpenApi();
 app.MapScalarApiReference();
+app.UseOutputCache();
 
 // API Routes - Version 1
 var api = app.MapGroup("/api/v1");
@@ -49,6 +55,10 @@ api.MapGet("/products", async (
 api.MapGet("/products/{id:int}", async (int id, IProductService service) =>
 {
     var product = await service.GetByIdAsync(id);
+
+    //verify output cache
+    Thread.Sleep(TimeSpan.FromSeconds(2));
+    
     return product is null
         ? Results.NotFound(new ProblemDetails
         {
@@ -64,7 +74,8 @@ api.MapGet("/products/{id:int}", async (int id, IProductService service) =>
 .WithDescription("Returns a single product based on its unique identifier. Returns 404 if the product doesn't exist.")
 .Produces<ProductResponse>(StatusCodes.Status200OK)
 .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
-.WithTags("Products");
+.WithTags("Products")
+.CacheOutput("Expires30");
 
 // POST /api/v1/products - Create a new product
 api.MapPost("/products", async (CreateProductRequest request, IProductService service) =>
